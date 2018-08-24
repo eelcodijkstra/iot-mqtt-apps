@@ -77,6 +77,10 @@ var mqttbroker = {
 
 Opmerking: MQTT via TCP gebruikt (default) poort 1883. Het websockets-interface gebruikt poort 1884.
 
+### JSON-LPP
+
+Deze versie van MQTTT ondersteunt ook het JSON-LPP-formaat.
+
 ### Links
 
 * http://micropython-iot-hackathon.readthedocs.io/en/latest/mqtt.html
