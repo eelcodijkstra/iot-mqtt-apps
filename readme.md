@@ -62,6 +62,21 @@ client.connect({
   onSuccess: onConnect, onFailure: onFailure});
 ``` 
 
+### Lokale broker
+
+Je kunt mqttt ook gebruiken met een lokale mqtt-broker, bijvoorbeeld een Raspberry Pi.
+Vaak kun je voor de lokale broker een lokale domeinnaam gebruiken (via mDNS).
+Als dat niet lukt, moet je het IP-adres gebruiken.
+
+``` javascript
+var mqttbroker = {
+    hostname: "raspberrypi.local",
+    port: 1884
+};
+```
+
+Opmerking: MQTT via TCP gebruikt (default) poort 1883. Het websockets-interface gebruikt poort 1884.
+
 ### Links
 
 * http://micropython-iot-hackathon.readthedocs.io/en/latest/mqtt.html
