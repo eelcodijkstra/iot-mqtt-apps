@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+  <head>
+    <style>
+      .box {
+        display: flex;
+        border: 1px solid blue;
+      }
+      .vbox {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid blue;
+      }
+      .doos {
+        border: 1px solid red;
+        margin: 10px auto;
+      }
+      .ldoos {
+        border: 1px solid red;
+        margin: auto;
+        margin: 10px;
+      }
+      .rdoos {
+        border: 1px solid red;
+        margin: 10px;
+        margin: auto;
+      }
+      button {
+        margin: 10px auto;
+        width: 60px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="vbox" style="margin:auto; width:320px;">
+      <div class="box" style="width:300px;">
+        <button >Knop A </button>
+        <button >Knop B </button>
+      </div>
+      <div class="box" style="width:300px;">
+        <div class="doos" style="width:100px; margin-right:5px;">A</div>
+        <div class="doos" style="width:100px; margin-left:5px;">B</div>
+      </div>  
+      <div class="box" style="width:300px;">
+        <input type="text" value="10" >
+        <input type="range" min="0" max="50" style="width:200px;" id="temp">
+        <div class="doos" style="width:100px;">B</div>
+      </div>
+    </div>  
+  </body>
+</html>

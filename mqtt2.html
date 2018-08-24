@@ -1,0 +1,222 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>MQTTT-2</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js" type="text/javascript">
+        </script>
+        <style>
+          table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+          }
+          th, td {
+            padding: 5px;
+          }
+        </style>
+    </head>
+    <body>
+        <h1>MQTT Test (v0.2)</h1>
+        <p>
+          <button id="onbutton">On</button>
+          <span style="font-weight:bold;" id="led"> [[LED]] </span>
+          <button id="offbutton">Off</button>
+        </p>
+        <p>
+          IoT-node:
+          <input id="iotnode" type="text" value="1234"> <br>
+        </p>
+        <div id="sensorvalues"></div>
+
+        <hr>
+
+        <p>
+          Subcribe to topic:
+          <input id="intopic" type="text" value="+/+/+"> <br>
+          <textarea id="inmessages" cols="120" rows="10">
+          </textarea> <br>
+          <button id="clearbutton"> Clear </button>
+        </p>
+        <p>
+          Publish to topic:
+          <input id="outtopic" type="text" value="node/xxxx/actuators"> <br>
+          <textarea id="outmessage" cols="120" rows="4">Hello...</textarea> <br>
+          <button id="publishbutton"> Publish </button>
+        </p>
+
+ <script>
+// example from: https://www.eclipse.org/paho/clients/js/
+/* global Paho */
+
+// Create a client instance
+var mqttbroker = {
+    hostname: "infvopedia.nl",
+    port: 1884
+};
+
+var client = new Paho.MQTT.Client(mqttbroker.hostname, Number(mqttbroker.port), "clientId");
+
+// set callback handlers
+client.onConnectionLost = onConnectionLost;
+client.onMessageArrived = onMessageArrived;
+
+function onFailure() {
+    alert("connection failed");
+}
+
+// called when the client connects
+function onConnect() {
+  // Once a connection has been made, make a subscription and send a message.
+  console.log("onConnect");
+  client.subscribe("+/+/+");
+  client.subscribe("World");
+  var message = new Paho.MQTT.Message("Hello");
+  message.destinationName = "World";
+  client.send(message); // to test connection
+}
+
+// called when the client loses its connection
+function onConnectionLost(responseObject) {
+  if (responseObject.errorCode !== 0) {
+    console.log("onConnectionLost:"+responseObject.errorMessage);
+  }
+}
+
+var msg;
+
+function mkLppRow(chan, type, value) {
+  var scaledValue;
+  var res = "";
+  if (type == "temperature") {
+    scaledValue = value / 10;
+  } else if (type == "humidity") {
+    scaledValue = value / 2;
+  } else if (type == "barometer") {
+    scaledValue = value / 10;
+  } else if (type == "dIn" || type == "dOut") {
+    scaledValue = value;
+  } else if (type == "aIn" || type == "aOut") {
+    scaledValue = value;
+  }
+  return "<tr><td>" + chan + "</td> <td>" +
+         type + "</td> <td>" + scaledValue + "</td></tr>\n";
+}
+
+// called when a message arrives
+function onMessageArrived(message) {
+  console.log("onMessageArrived:" + message.payloadString);
+  console.log("destination: " + message.destinationName);
+  var inmessages = document.getElementById("inmessages");
+  inmessages.value = inmessages.value + "\n" +
+    message.destinationName + ": " + message.payloadString;
+
+  // display sensor values of current iotnode, when applicable:
+  var nodenr = document.getElementById("iotnode").value;
+  var substrings = message.destinationName.split("/");
+  if (substrings.length == 3 &&
+      substrings[0] == "node" &&
+      substrings[1] == nodenr &&
+      substrings[2] == "sensors" ) {
+    var obj = {};
+    try {
+      obj = JSON.parse(message.payloadString);
+    } catch (e) {
+      obj = {error: e, payload: message.payloadString};
+    }
+    var table = "<table>\n";
+    table = table + "<tr><th>sensor</th><th>type</th><th>value</th></tr>\n";
+    for (var key in obj) {
+      if (obj.hasOwnProperty(key)) {
+          if (key == "payload") {
+            payload = obj[key];
+            for (var chan in payload) {
+              subObj = payload[chan];
+              if (chan == "0") {
+                if (subObj.dOut == 1) {
+                  console.log("Led0 ON");
+                  document.getElementById("led").style.color = "red";
+                } else {
+                  console.log("Led0 OFF");
+                  document.getElementById("led").style.color = "black";                  
+                }
+              }
+              for (var subKey in subObj) {
+                table = table + mkLppRow(chan, subKey, subObj[subKey]);
+              }
+            }
+          } else {
+            table = table +  "<tr><td> - </td><td>" +
+              key + "</td> <td>" + obj[key] + "</td></tr>\n";
+          }
+      }
+    }
+    table = table + "</table>\n";
+    document.getElementById("sensorvalues").innerHTML = table;
+  }
+}
+
+function connectMqtt() {
+  console.log("connect MQTT");
+  client.connect({
+    userName: "mqtttest", password: "testmqtt",
+    onSuccess: onConnect, onFailure: onFailure});
+}
+  
+function timerHandler() {
+  if (!client.isConnected()) {
+    connectMqtt();
+  }
+}
+   
+function topicInputHandler() {
+  var topic = topicinput.value;
+  console.log("Subscribe to: " + topic);
+  client.unsubscribe("+/+/+");
+  client.subscribe(topic);
+}
+
+var topicinput = document.getElementById("intopic");
+topicinput.onchange = topicInputHandler;
+
+function onbuttonhandler() {
+  var msg = new Paho.MQTT.Message('{"0":{"dOut":1}}'); // msg contents??
+  var nodenr = document.getElementById("iotnode").value;
+  msg.destinationName = "node/" + nodenr + "/actuators";
+  client.send(msg);
+  console.log("send: Led on");
+  document.getElementById("led").style.color = "red";
+}
+
+function offbuttonhandler() {
+  var msg = new Paho.MQTT.Message('{"0":{"dOut":0}}');
+  var nodenr = document.getElementById("iotnode").value;
+  msg.destinationName = "node/" + nodenr + "/actuators";
+  client.send(msg);
+  console.log("send: Led off");
+  document.getElementById("led").style.color = "black";
+}
+
+function clearbuttonhandler() {
+  document.getElementById("inmessages").value = "";
+}
+
+function publishbuttonhandler() {
+  var msgtext = document.getElementById("outmessage").value;
+  var msg = new Paho.MQTT.Message(msgtext);
+  msg.destinationName = document.getElementById("outtopic").value;
+  if (msg.destinationName === "") {
+    msg.destinationName = "World";
+  }
+  client.send(msg);
+}
+
+document.getElementById("onbutton").onclick = onbuttonhandler;
+document.getElementById("offbutton").onclick = offbuttonhandler;
+document.getElementById("clearbutton").onclick = clearbuttonhandler;
+document.getElementById("publishbutton").onclick = publishbuttonhandler;
+// connect the client
+connectMqtt();
+setInterval(timerHandler, 50000); // 50 sec   
+ </script>
+    </body>
+</html>
