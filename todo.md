@@ -10,13 +10,8 @@
 * [x] clear inmessage-area button
 * [x] no automatic clear for publish-area
 
-Suggestion:
-
-* mqtt0.html - for raspberrypi.local
-* mqtt1.html - for arbitrary broker, with window for brokername, username,
-password
-
 ### iotnode-app
 
 * [ ] generate random node-id (i.s.o. fixed one: gives conflicts with multiple nodes running.)
 * [ ] add: light level sensor (slider)
+* [ ] how to activate 2 buttons at the same time?

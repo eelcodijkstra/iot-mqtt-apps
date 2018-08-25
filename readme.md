@@ -92,3 +92,11 @@ Dit is een web-app waarmee je een IoT-knoop kunt simuleren.
 Deze web-app communiceert via websockets met 
 Dit programma kun je in combinatie met mqttt gebruiken: daarmee kun je beide programma's testen.
 
+Deze app heeft hetzelfde gedrag als een hardware-IoT-knoop:
+
+* elke 60 sec. stuurt deze app de waarden van de sensoren, onder topic `node/xxxx/sensors`, waarbij `xxxx` de ingestelde node-id is;
+* als formaat voor de data wordt JSON-LPP gebruikt: hetzelfde als de WiFi/mqtt-knopen en de RFM69-gateway.
+* als de app een actuatorbericht ontvangt, stuurt deze ook direct de sensordata op. (De toepassing kan daarmee bijvoorbeeld controleren of het bericht ontvangen en uitgevoerd is.)
+* bij het indrukken van een button stuurt de app direct de sensordata op.
+  * dit geldt niet voor de veranderingen van de andere gesimuleerde sensoren.
+

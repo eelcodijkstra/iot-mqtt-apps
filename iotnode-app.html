@@ -1,46 +1,47 @@
 <!doctype html>
 <html>
   <head>
-    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
-    <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
-    <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+    <title>IoT-node-0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js" type="text/javascript"></script>
     <style>
       body {padding-left:20px;}
-      #led0 {background-color:red;}
-      #led1 {background-color:green;}
+      #led0 {background-color:skyblue;}
+      #led1 {background-color:skyblue;}
+      .box {
+        display: flex;
+        border: 1px solid blue;
+        padding: 10px;
+      }
+      input {
+        font-size: 80%;
+      }
     </style>
   </head>
   <body style="width:320px;">
-    <h2>IoT-node simulator</h2>
-    <div>
-      <form id="iotform">
-        <div>
-          <button style="border-radius: 25%; width:80px;">led0</button>
-          <button style="border-radius: 25%; width:80px;">led1</button>
-          <input data-inline="true" value="Led0" id="led0" type="button">
-          <input data-inline="true" value="Led1" id="led1" type="button">
-        </div>
-        <div>
-          <input data-inline="true" value="Button0" id="button0" type="button">
-          <input data-inline="true" value="Button1" id="button1" type="button">
-        </div>
-      </form>
+    <h2>IoT-node simulator (v0.2)</h2>
+    <div class="box" style="width:300px;">
+      <button style="border-radius: 15%; width:80px; margin: auto; margin-right:20px;" id="led0">led0</button>
+      <button style="border-radius: 15%; width:80px; margin: auto; margin-left:20px;" id="led1">led1</button>
     </div>
-    <div style="width:320px;">
-      <form >
-        <label for="tempSlider">Temperature (&deg;C):</label>
-        <input name="tempSlides" id="tempSlider" min="0" max="50" value="25" type="range">
-        <label for="presSlider">Atm.pressure (hPa):</label>
-        <input name="presSlider" id="presSlider" min="970" max="1050" value="1010" type="range">
-      </form>
+    <div class="box" style="width:300px;">
+      <button style="margin: auto; margin-right:10px;" id="button0">Button0</button>
+      <button style="margin: auto; margin-left:10px;" id="button1">Button1</button>
     </div>
+    <div class="box" style="width:300px;">
+      Temp. (&deg;C) 
+      <input type="range" min="0" max="50" style="width:200px;" id="tempSlider">
+      <input type="text" value="10" style="width:30px;" id="tempValue">
+    </div>
+    <div class="box" style="width:300px; padding: 10px;">
+      Baro. (hPa) 
+      <input type="range" min="950" max="1050" style="width:200px;" id="baroSlider">
+      <input type="text" value="10" style="width:30px;" id="baroValue">
+    </div>    
+    
     <hr>
-    <div>
-      <form style="width:100px;">
+    <div class="box" style="width:300px;">
         <label for="nodeid">Node-id:</label>
-        <input type="text" name="nodeid" id="nodeid" value="e0f1" >
-      </form>
+        <input type="text" name="nodeid" id="nodeid" value="e0f1" style="width:30px; margin: auto;">
     </div>
     <script>
     // example from: https://www.eclipse.org/paho/clients/js/
@@ -48,7 +49,7 @@
 
     // Create a client instance
     var mqttbroker = {
-      hostname: "infvoplein.nl",
+      hostname: "infvopedia.nl",
       port: 1884
     };
 
@@ -57,6 +58,8 @@
     var client = new Paho.MQTT.Client(mqttbroker.hostname, Number(mqttbroker.port), clientId);
 
     var nodeid = "x", sensorTopic = "", actuatorTopic = "";
+      
+    var led0 = 0, led1 = 0;
 
     // set callback handlers
     client.onConnectionLost = onConnectionLost;
@@ -101,31 +104,40 @@
           } catch (e) {
             obj = {error: e, payload: message.payloadString};
           }
-          if ("led0" in obj) {
-            if (obj.led0) {
-              $("#led0").css("background-color", "red");
+          if ("0" in obj && "dOut" in obj["0"]) {
+            if (obj["0"].dOut) {
+              document.getElementById("led0").style.backgroundColor = "red";
+              led0 = 1;
             } else {
-              $("#led0").css("background-color", "white");
+              document.getElementById("led0").style.backgroundColor = "white";
+              led0 = 0;
             }
           }
-          if ("led1" in obj) {
-            if (obj.led1) {
-              $("#led1").css("background-color", "red");
+          if ("1" in obj && "dOut" in obj["1"]) {
+            if (obj["1"].dOut) {
+              document.getElementById("led1").style.backgroundColor = "red";
+              led1 = 1;
             } else {
-              $("#led1").css("background-color", "white");
+              document.getElementById("led1").style.backgroundColor = "white";
+              led1 = 0;
             }
           }
+          sendSensorValues(0, 0);
           console.log("handled: " + JSON.stringify(obj));
+          
         }
       }
 
       function connectMQTT() {
         console.log("before connect");
 
-        nodeid = $("#nodeid").val();
+        nodeid = document.getElementById("nodeid").value;
+        console.log("nodeid: " + nodeid);
         sensorTopic = "node/" + nodeid + "/sensors";
         actuatorTopic = "node/" + nodeid + "/actuators";
-        client.connect({onSuccess:onConnect, onFailure:onFailure});
+        client.connect({
+          userName: "mqtttest", password: "testmqtt",
+          onSuccess: onConnect, onFailure: onFailure});
       }
 
       function button0Handler() {
@@ -135,24 +147,42 @@
 
       function button1Handler() {
         console.log("button1");
-        sendSensorValues(1,0);
+        sendSensorValues(0,1);
       }
 
       function sendSensorValues(b0, b1) {
         var obj = {};
-        obj.button0 = b0;
-        obj.button1 = b1;
-        obj.temp = $("#tempSlider").val();
-        obj.pres = $("#presSlider").val();
-        obj.id = nodeid;
+        obj.nodeid = nodeid;
+        obj.count = count;
+        count = count + 1;
+        obj.payload = {};
+        obj.payload["0"] = {dOut: led0};
+        obj.payload["1"] = {dOut: led1};
+        if (b0) {
+          obj.payload["2"] = {dIn: b0};
+        }
+        if (b1) {
+          obj.payload["3"] = {dIn: b1};          
+        }
+        obj.payload["4"] = {temperature: document.getElementById("tempSlider").value * 10};
+        obj.payload["5"] = {barometer: document.getElementById("baroSlider").value * 10};
         console.log("send: " + JSON.stringify(obj));
         var msg = new Paho.MQTT.Message(JSON.stringify(obj));
         msg.destinationName = sensorTopic;
         client.send(msg);
       }
+      
+      function sliderHandler() {
+        console.log("slider changed");
+        var temp = document.getElementById("tempSlider").value;
+        var baro = document.getElementById("baroSlider").value;
+        document.getElementById("tempValue").value = temp;
+        document.getElementById("baroValue").value = baro; 
+        // sendSensorValues(0,0); - only at regular intervals, like phys. IoT-node
+      }
 
       function nodeidHandler() {
-        var newid = $("#nodeid").value;
+        var newid = document.getElementById("nodeid").value;
         if (newid !== nodeid) {
           client.unsubscribe(sensorTopic);
           client.unsubscribe(actuatorTopic);
@@ -171,11 +201,18 @@
         }      
       }
 
-      $("#nodeid").change(nodeidHandler);
-      $("#button0").click(button0Handler);
-      $("#button1").click(button1Handler);
+      var temp = document.getElementById("tempSlider").value;
+      var baro = document.getElementById("baroSlider").value;
+      var count = 0;
+      document.getElementById("tempValue").value = temp;
+      document.getElementById("baroValue").value = baro;
+      document.getElementById("nodeid").onchange = nodeidHandler;
+      document.getElementById("button0").onclick = button0Handler;
+      document.getElementById("button1").onclick = button1Handler;
+      document.getElementById("tempSlider").onchange = sliderHandler;
+      document.getElementById("baroSlider").onchange = sliderHandler;
       connectMQTT();
-      setInterval(timerHandler, 50000);
+      setInterval(timerHandler, 60000); // 60 sec
       </script>
   </body
 </html>
