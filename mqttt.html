@@ -16,7 +16,7 @@
         </style>
     </head>
     <body>
-        <h1>MQTT Test (v0.2)</h1>
+        <h1>MQTT Test (v0.3)</h1>
         <p>
           <button id="onbutton">On</button>
           <span style="font-weight:bold;" id="led"> [[LED]] </span>
@@ -54,7 +54,9 @@ var mqttbroker = {
     port: 1884
 };
 
-var client = new Paho.MQTT.Client(mqttbroker.hostname, Number(mqttbroker.port), "clientId");
+
+var clientId = "clientId-" + Math.random() * 1000; // [0..]1000
+var client = new Paho.MQTT.Client(mqttbroker.hostname, Number(mqttbroker.port), clientId );
 
 // set callback handlers
 client.onConnectionLost = onConnectionLost;
@@ -137,7 +139,7 @@ function onMessageArrived(message) {
                   document.getElementById("led").style.color = "red";
                 } else {
                   console.log("Led0 OFF");
-                  document.getElementById("led").style.color = "black";                  
+                  document.getElementById("led").style.color = "black";
                 }
               }
               for (var subKey in subObj) {
@@ -161,13 +163,13 @@ function connectMqtt() {
     userName: "mqtttest", password: "testmqtt",
     onSuccess: onConnect, onFailure: onFailure});
 }
-  
+
 function timerHandler() {
   if (!client.isConnected()) {
     connectMqtt();
   }
 }
-   
+
 function topicInputHandler() {
   var topic = topicinput.value;
   console.log("Subscribe to: " + topic);
@@ -216,7 +218,7 @@ document.getElementById("clearbutton").onclick = clearbuttonhandler;
 document.getElementById("publishbutton").onclick = publishbuttonhandler;
 // connect the client
 connectMqtt();
-setInterval(timerHandler, 50000); // 50 sec   
+setInterval(timerHandler, 50000); // 50 sec
  </script>
     </body>
 </html>
