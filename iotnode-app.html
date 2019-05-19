@@ -2,46 +2,92 @@
 <html>
   <head>
     <title>IoT-node-0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js" type="text/javascript"></script>
     <style>
-      body {padding-left:20px;}
-      #led0 {background-color:skyblue;}
-      #led1 {background-color:skyblue;}
+      body {
+        max-width: 350px;
+        margin-left: auto;
+        margin-right: auto;
+        background-color:#e6e9f020;
+      }
       .box {
         display: flex;
         border: 1px solid blue;
         padding: 10px;
+        width: 80%;
+        margin: auto;
+        background-color:#e6e9f0;
       }
       input {
         font-size: 80%;
+        background-color: #e6e9f8;
+        text-align: center;
+      }
+      .separatorline {
+        width:80%;
+        margin:auto;
+        margin-bottom: 20px;
+        margin-top: 20px;
+      }
+      .title {
+        max-width:85%;
+        margin: auto;
+        margin-top: 10px;
+        margin-bottom: 20px;
+      }
+      button {
+        border-radius: 15%;
+        margin: auto;
+        background-color: lightblue;
+      }
+      .leftbutton {
+        margin-right: 20px;
+      }
+      .rightbutton {
+        margin-left: 20px;
+      }
+      .led {
+        background-color: rgb(247, 247, 168);
+      }
+      #nodeid {
+        width:40px;
+        margin: auto;
+        text-align: center;
       }
     </style>
   </head>
-  <body style="width:320px;">
-    <h2>IoT-node simulator (v0.2)</h2>
-    <div class="box" style="width:300px;">
-      <button style="border-radius: 15%; width:80px; margin: auto; margin-right:20px;" id="led0">led0</button>
-      <button style="border-radius: 15%; width:80px; margin: auto; margin-left:20px;" id="led1">led1</button>
+  <body>
+    <h2 class="title"> IoT-node simulator (v0.3)</h2>
+    <div class="box">
+      <button class="leftbutton led" id="led0">led0</button>
+      <button class="rightbutton led" id="led1">led1</button>
     </div>
-    <div class="box" style="width:300px;">
-      <button style="margin: auto; margin-right:10px;" id="button0">Button0</button>
-      <button style="margin: auto; margin-left:10px;" id="button1">Button1</button>
+    <div class="box" >
+      <button class="leftbutton" id="button0">Button0</button>
+      <button class="rightbutton" id="button1">Button1</button>
     </div>
-    <div class="box" style="width:300px;">
-      Temp. (&deg;C) 
-      <input type="range" min="0" max="50" style="width:200px;" id="tempSlider">
-      <input type="text" value="10" style="width:30px;" id="tempValue">
+    <div class="box" >
+      Temp. (&deg;C)
+      <input type="range" min="0" max="50" style="width:200px; min-height: 48px;" id="tempSlider">
+      <input type="text" value="5" style="width:30px;" id="tempValue">
     </div>
-    <div class="box" style="width:300px; padding: 10px;">
-      Baro. (hPa) 
-      <input type="range" min="950" max="1050" style="width:200px;" id="baroSlider">
-      <input type="text" value="10" style="width:30px;" id="baroValue">
-    </div>    
-    
-    <hr>
-    <div class="box" style="width:300px;">
+    <div class="box">
+      Baro. (hPa)
+      <input type="range" min="950" max="1050" style="width:200px; min-height: 48px;" id="baroSlider">
+      <input type="text" value="1002" style="width:30px;" id="baroValue">
+    </div>
+    <div class="box">
+      Light level
+      <input type="range" min="0" max="1023" style="width:200px; min-height: 48px;" id="lightSlider">
+      <input type="text" value="512" style="width:30px;" id="lightValue">
+    </div>
+
+    <hr class="separatorline">
+
+    <div class="box" style="margin-bottom: 20px;">
         <label for="nodeid">Node-id:</label>
-        <input type="text" name="nodeid" id="nodeid" value="e0f1" style="width:30px; margin: auto;">
+        <input type="text" name="nodeid" id="nodeid" value="e0f1">
     </div>
     <script>
     // example from: https://www.eclipse.org/paho/clients/js/
@@ -58,7 +104,7 @@
     var client = new Paho.MQTT.Client(mqttbroker.hostname, Number(mqttbroker.port), clientId);
 
     var nodeid = "x", sensorTopic = "", actuatorTopic = "";
-      
+
     var led0 = 0, led1 = 0;
 
     // set callback handlers
@@ -124,7 +170,6 @@
           }
           sendSensorValues(0, 0);
           console.log("handled: " + JSON.stringify(obj));
-          
         }
       }
 
@@ -162,22 +207,27 @@
           obj.payload["2"] = {dIn: b0};
         }
         if (b1) {
-          obj.payload["3"] = {dIn: b1};          
+          obj.payload["3"] = {dIn: b1};
         }
         obj.payload["4"] = {temperature: document.getElementById("tempSlider").value * 10};
         obj.payload["5"] = {barometer: document.getElementById("baroSlider").value * 10};
+        obj.payload["8"] = {aIn: document.getElementById("lightSlider").value};
         console.log("send: " + JSON.stringify(obj));
         var msg = new Paho.MQTT.Message(JSON.stringify(obj));
         msg.destinationName = sensorTopic;
         client.send(msg);
       }
-      
+
       function sliderHandler() {
-        console.log("slider changed");
         var temp = document.getElementById("tempSlider").value;
         var baro = document.getElementById("baroSlider").value;
+        var light = document.getElementById("lightSlider").value;
+        localStorage.setItem("temperature", temp);
+        localStorage.setItem("barometer", baro);
+        localStorage.setItem("light", light);
         document.getElementById("tempValue").value = temp;
-        document.getElementById("baroValue").value = baro; 
+        document.getElementById("baroValue").value = baro;
+        document.getElementById("lightValue").value = light;
       }
 
       function nodeidHandler() {
@@ -186,30 +236,48 @@
           client.unsubscribe(sensorTopic);
           client.unsubscribe(actuatorTopic);
           nodeid = newid;
+          localStorage.setItem("simnodeid", nodeid);
           sensorTopic = "node/" + nodeid + "/sensors";
           actuatorTopic = "node/" + nodeid + "/actuators";
           client.subscribe(actuatorTopic);
         }
       }
-      
+
+      function generateNodeId() {
+        nodeid = localStorage.getItem("simnodeid");
+        if (nodeid === null) {
+          var randombyte = Math.floor(Math.random() * 256);
+          nodeid = "e0" + randombyte.toString(16);
+          localStorage.setItem("simnodeid", nodeid);
+        }
+        return nodeid;
+      }
+
       function timerHandler() {
         if (!client.isConnected()) {
           connectMQTT()
         } else {
-          sendSensorValues(0, 0);          
-        }      
+          sendSensorValues(0, 0);
+        }
       }
 
-      var temp = document.getElementById("tempSlider").value;
-      var baro = document.getElementById("baroSlider").value;
+      var temp = localStorage.getItem("temperature") || 25; // stored value or default
+      var baro = localStorage.getItem("barometer") || 1000;
+      var light = localStorage.getItem("light") || 512;
+      document.getElementById("tempSlider").value = temp;
+      document.getElementById("baroSlider").value = baro;
+      document.getElementById("lightSlider").value = light;
       var count = 0;
       document.getElementById("tempValue").value = temp;
       document.getElementById("baroValue").value = baro;
+      document.getElementById("lightValue").value = light;
       document.getElementById("nodeid").onchange = nodeidHandler;
       document.getElementById("button0").onclick = button0Handler;
       document.getElementById("button1").onclick = button1Handler;
       document.getElementById("tempSlider").onchange = sliderHandler;
       document.getElementById("baroSlider").onchange = sliderHandler;
+      document.getElementById("lightSlider").onchange = sliderHandler;
+      document.getElementById("nodeid").value = generateNodeId();
       connectMQTT();
       setInterval(timerHandler, 60000); // 60 sec
       </script>
